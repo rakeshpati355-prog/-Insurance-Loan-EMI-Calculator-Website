@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Insurance / Loan EMI Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --success: #16a34a;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      padding: 24px 16px 32px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+
+    main {
+      max-width: 950px;
+      margin: -20px auto 40px;
+      padding: 0 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(2, 6, 23, 0.06);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .card h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin: 10px 0 4px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fff;
+      color: var(--text);
+    }
+    input:focus, select:focus {
+      outline: 2px solid var(--primary);
+      border-color: transparent;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 600px) {
+      .row { grid-template-columns: 1fr; }
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 11px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 12px;
+      width: 100%;
+    }
+    button:hover { background: var(--primary-dark); }
+    button.secondary {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    button.secondary:hover { background: #cbd5e1; }
+
+    .result-box {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .result-row:last-child { margin-bottom: 0; }
+    .result-row .label {
+      color: var(--muted);
+    }
+    .result-row .value {
+      font-weight: 700;
+    }
+    .emi-highlight {
+      font-size: 22px;
+      color: var(--primary);
+      margin-top: 6px;
+    }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 14px;
+      background: #fff;
+      color: var(--text);
+    }
+    .tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+
+    .amortization-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+    .amortization-table th,
+    .amortization-table td {
+      border: 1px solid #e2e8f0;
+      padding: 6px;
+      text-align: right;
+    }
+    .amortization-table th {
+      background: #f1f5f9;
+      text-align: center;
+      font-weight: 600;
+    }
+    .amortization-scroll {
+      max-height: 220px;
+      overflow: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Insurance / Loan EMI Calculator</h1>
+    <p>Simple single‑file project for Web Technology (VS Code friendly)</p>
+  </header>
+
+  <main>
+    <div class="grid">
+      <!-- LEFT: Calculator -->
+      <section class="card">
+        <h2>Calculate EMI / Premium</h2>
+
+        <div class="tabs">
+          <div class="tab active" data-tab="loan">Loan EMI</div>
+          <div class="tab" data-tab="insurance">Insurance Premium</div>
+        </div>
+
+        <!-- LOAN SECTION -->
+        <div id="loanSection" class="section active">
+          <label for="loanAmount">Loan Amount (₹)</label>
+          <input id="loanAmount" type="number" min="1000" step="1000" value="500000" />
+
+          <div class="row">
+            <div>
+              <label for="loanRate">Annual Interest Rate (%)</label>
+              <input id="loanRate" type="number" min="0.1" step="0.1" value="10.5" />
+            </div>
+            <div>
+              <label for="loanTenureYears">Tenure (Years)</label>
+              <input id="loanTenureYears" type="number" min="1" step="1" value="5" />
+            </div>
+          </div>
+
+          <button id="calcLoanBtn">Calculate Loan EMI</button>
+
+          <div class="result-box" id="loanResultBox" style="display:none;">
+            <div class="result-row">
+              <div class="label">Monthly EMI</div>
+              <div class="value emi-highlight" id="loanEmiValue">₹0</div>
+            </div>
+            <div class="result-row">
+              <div class="label">Total Payment</div>
+              <div class="value" id="loanTotalPayment">₹0</div>
+            </div>
+            <div class="result-row">
+              <div class="label">Total Interest</div>
+              <div class="value" id="loanTotalInterest">₹0</div>
+            </div>
+            <p class="note">Formula: EMI = P × r × (1+r)ⁿ ÷ [(1+r)ⁿ − 1], where r = monthly rate, n = months. [52][55][58][61][64]</p>
+
+            <details>
+              <summary style="cursor:pointer; margin-top:8px; font-size:13px; color:var(--muted);">Show Amortization Schedule</summary>
+              <div class="amortization-scroll">
+                <table class="amortization-table" id="amortTable">
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>EMI</th>
+                      <th>Principal</th>
+                      <th>Interest</th>
+                      <th>Balance</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- INSURANCE SECTION -->
+        <div id="insuranceSection" class="section">
+          <label for="policyType">Policy Type</label>
+          <select id="policyType">
+            <option value="term">Term Life Insurance</option>
+            <option value="health">Health Insurance</option>
+            <option value="vehicle">Vehicle Insurance</option>
+          </select>
+
+          <div class="row">
+            <div>
+              <label for="sumAssured">Sum Assured / Coverage (₹)</label>
+              <input id="sumAssured" type="number" min="100000" step="50000" value="500000" />
+            </div>
+            <div>
+              <label for="age">Age of Insured</label>
+              <input id="age" type="number" min="18" max="80" step="1" value="30" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="termYears">Policy Term (Years)</label>
+              <input id="termYears" type="number" min="1" max="40" step="1" value="20" />
+            </div>
+            <div>
+              <label for="baseRate">Base Rate (%)</label>
+              <input id="baseRate" type="number" min="0.1" step="0.1" value="0.6" />
+            </div>
+          </div>
+
+          <label for="riders">Optional Riders</label>
+          <select id="riders" multiple size="3">
+            <option value="critical">Critical Illness Rider (+20%)</option>
+            <option value="accident">Accidental Death Rider (+10%)</option>
+            <option value="waiver">Premium Waiver Rider (+5%)</option>
+          </select>
+
+          <button id="calcInsuranceBtn">Calculate Insurance Premium</button>
+
+          <div class="result-box" id="insuranceResultBox" style="display:none;">
+            <div class="result-row">
+              <div class="label">Annual Premium</div>
+              <div class="value emi-highlight" id="annualPremiumValue">₹0</div>
+            </div>
+            <div class="result-row">
+              <div class="label">Monthly Premium</div>
+              <div class="value" id="monthlyPremiumValue">₹0</div>
+            </div>
+            <p class="note">Simplified model: Premium ≈ (Sum Assured × rate × age/term factor) with rider loadings. [57][60][66]</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Info / Help -->
+      <section class="card">
+        <h2>How It Works</h2>
+        <p style="font-size:14px; color:var(--muted); margin:0 0 8px;">
+          This page demonstrates a basic EMI and insurance premium calculator using only HTML, CSS, and JavaScript.
+        </p>
+        <ul style="font-size:14px; color:var(--muted); margin:0; padding-left:18px;">
+          <li>Loan EMI uses the standard reducing‑balance formula. [52][55][58][61]</li>
+          <li>Insurance premium uses a simplified rule‑based model for demonstration. [57][60][66]</li>
+          <li>All calculations happen in your browser; no data is sent to any server.</li>
+        </ul>
+
+        <h3 style="font-size:16px; margin:16px 0 8px;">Formulas Used</h3>
+        <p style="font-size:13px; color:var(--muted); margin:0;">
+          Loan EMI:
+          <br />
+          EMI = P × r × (1 + r)ⁿ ÷ [(1 + r)ⁿ − 1]
+          <br />
+          P = principal, r = monthly interest rate, n = total months. [52][55][58][61][64]
+        </p>
+        <p style="font-size:13px; color:var(--muted); margin:10px 0 0;">
+          Insurance (simplified):
+          <br />
+          Base premium ≈ Sum Assured × baseRate% × (age / termYears) × riderFactor. [57][60][66]
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // --- Tabs ---
+    const tabs = document.querySelectorAll(".tab");
+    const loanSection = document.getElementById("loanSection");
+    const insuranceSection = document.getElementById("insuranceSection");
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        if (tab.dataset.tab === "loan") {
+          loanSection.classList.add("active");
+          insuranceSection.classList.remove("active");
+        } else {
+          loanSection.classList.remove("active");
+          insuranceSection.classList.add("active");
+        }
+      });
+    });
+
+    // --- Loan EMI ---
+    const calcLoanBtn = document.getElementById("calcLoanBtn");
+    const loanResultBox = document.getElementById("loanResultBox");
+    const loanEmiValue = document.getElementById("loanEmiValue");
+    const loanTotalPayment = document.getElementById("loanTotalPayment");
+    const loanTotalInterest = document.getElementById("loanTotalInterest");
+    const amortTableBody = document.querySelector("#amortTable tbody");
+
+    function formatCurrency(num) {
+      return "₹" + Math.round(num).toLocaleString("en-IN");
+    }
+
+    calcLoanBtn.addEventListener("click", () => {
+      const P = parseFloat(document.getElementById("loanAmount").value);
+      const annualRate = parseFloat(document.getElementById("loanRate").value);
+      const years = parseFloat(document.getElementById("loanTenureYears").value);
+
+      if (!P || !annualRate || !years || P <= 0 || annualRate <= 0 || years <= 0) {
+        alert("Please enter valid positive values for amount, rate, and tenure.");
+        return;
+      }
+
+      const r = (annualRate / 12) / 100; // monthly rate
+      const n = years * 12; // months
+
+      const powTerm = Math.pow(1 + r, n);
+      const emi = (P * r * powTerm) / (powTerm - 1);
+      const totalPayment = emi * n;
+      const totalInterest = totalPayment - P;
+
+      loanEmiValue.textContent = formatCurrency(emi);
+      loanTotalPayment.textContent = formatCurrency(totalPayment);
+      loanTotalInterest.textContent = formatCurrency(totalInterest);
+      loanResultBox.style.display = "block";
+
+      // Amortization schedule
+      amortTableBody.innerHTML = "";
+      let balance = P;
+      for (let month = 1; month <= n; month++) {
+        const interestPart = balance * r;
+        const principalPart = emi - interestPart;
+        balance = balance - principalPart;
+        if (balance < 0) balance = 0;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${month}</td>
+          <td>${formatCurrency(emi)}</td>
+          <td>${formatCurrency(principalPart)}</td>
+          <td>${formatCurrency(interestPart)}</td>
+          <td>${formatCurrency(balance)}</td>
+        `;
+        amortTableBody.appendChild(row);
+      }
+    });
+
+    // --- Insurance Premium (simplified model) ---
+    const calcInsuranceBtn = document.getElementById("calcInsuranceBtn");
+    const insuranceResultBox = document.getElementById("insuranceResultBox");
+    const annualPremiumValue = document.getElementById("annualPremiumValue");
+    const monthlyPremiumValue = document.getElementById("monthlyPremiumValue");
+
+    calcInsuranceBtn.addEventListener("click", () => {
+      const policyType = document.getElementById("policyType").value;
+      const sumAssured = parseFloat(document.getElementById("sumAssured").value);
+      const age = parseFloat(document.getElementById("age").value);
+      const termYears = parseFloat(document.getElementById("termYears").value);
+      const baseRate = parseFloat(document.getElementById("baseRate").value);
+
+      if (!sumAssured || !age || !termYears || !baseRate ||
+          sumAssured <= 0 || age <= 0 || termYears <= 0 || baseRate <= 0) {
+        alert("Please enter valid positive values for all fields.");
+        return;
+      }
+
+      // Rider selection
+      const ridersSelect = document.getElementById("riders");
+      const selectedRiders = Array.from(ridersSelect.selectedOptions).map(o => o.value);
+
+      let riderFactor = 1;
+      if (selectedRiders.includes("critical")) riderFactor += 0.20;
+      if (selectedRiders.includes("accident")) riderFactor += 0.10;
+      if (selectedRiders.includes("waiver")) riderFactor += 0.05;
+
+      // Simple age/term factor
+      const ageTermFactor = age / termYears;
+
+      // Very simplified premium model (for project demo only)
+      // Premium ≈ SumAssured × (baseRate/100) × ageTermFactor × riderFactor
+      let annualPremium = sumAssured * (baseRate / 100) * ageTermFactor * riderFactor;
+
+      // Slight adjustment by policy type (demo logic)
+      if (policyType === "health") {
+        annualPremium *= 1.2; // health typically higher
+      } else if (policyType === "vehicle") {
+        annualPremium *= 0.8; // vehicle often lower than life for same sum
+      }
+
+      const monthlyPremium = annualPremium / 12;
+
+      annualPremiumValue.textContent = formatCurrency(annualPremium);
+      monthlyPremiumValue.textContent = formatCurrency(monthlyPremium);
+      insuranceResultBox.style.display = "block";
+    });
+  </script>
+</body>
+</html>
